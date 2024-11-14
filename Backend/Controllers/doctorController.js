@@ -1,5 +1,6 @@
 import Doctor from "../models/DoctorSchema.js";
 import Booking from "../models/BookingSchema.js";
+
 export const updateDoctor = async (req, res) => {
   const id = req.params.id;
 
@@ -21,11 +22,12 @@ export const updateDoctor = async (req, res) => {
     });
   }
 };
+
 export const deleteDoctor = async (req, res) => {
   const id = req.params.id;
 
   try {
-    const deleteDoctor = await Doctor.findByIdAndDelete(id);
+    await Doctor.findByIdAndDelete(id);
     res.status(200).json({
       success: true,
       message: "Successfully deleted",
@@ -45,6 +47,12 @@ export const getSingleDoctor = async (req, res) => {
     const doctor = await Doctor.findById(id)
       .populate("reviews")
       .select("-password");
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: "No doctor found",
+      });
+    }
     res.status(200).json({
       success: true,
       message: "Doctor found.",
@@ -57,6 +65,7 @@ export const getSingleDoctor = async (req, res) => {
     });
   }
 };
+
 export const getAllDoctor = async (req, res) => {
   try {
     const { query } = req.query;
@@ -87,27 +96,28 @@ export const getAllDoctor = async (req, res) => {
   }
 };
 
-export const getDoctorProfile = async(req, res) => {
+export const getDoctorProfile = async (req, res) => {
   const doctorId = req.userId;
 
   try {
-    const doctor = await Doctor.findById(doctorId);
+    const doctor = await Doctor.findById(doctorId).select("-password");
     if (!doctor) {
-      return req
-        .status(404)
-        .json({ success: false, message: "Doctor not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found",
+      });
     }
 
-    const [password, ...rest] = doctor._doc;
-    const appointments = await Booking.find({doctor:doctorId})
+    const appointments = await Booking.find({ doctor: doctorId });
     res.status(200).json({
       success: true,
-      message: "Profile info is getting",
-      data: { ...rest, appointments },
+      message: "Profile info retrieved successfully",
+      data: { ...doctor._doc, appointments },
     });
   } catch (error) {
-    res
-      .status(5000)
-      .json({ success: false, message: "Something went wrong, connot get" });
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong, cannot retrieve profile",
+    });
   }
-}
+};

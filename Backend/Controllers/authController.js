@@ -68,49 +68,46 @@ export const register = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  const { email } = req.body;
+  const { email, password } = req.body; // Ensure you extract both email and password
   try {
+    // Debugging: Log incoming request
+    console.log("Login attempt for email:", email);
+
     let user = null;
     const patient = await User.findOne({ email });
-    const doctor = await User.findOne({ email });
+    const doctor = await Doctor.findOne({ email });
 
-    if (patient) {
-      user = patient;
-    }
-    if (doctor) {
-      user = doctor;
-    }
+    // Combine user checking for patients and doctors
+    user = patient || doctor;
 
-    //check if user exist or not
+    // Check if user exists
     if (!user) {
+      console.log("User not found");
       return res.status(404).json({ message: "User not found." });
     }
-    //compare password
-    const isPasswordMatch = await bcrypt.compare(
-      req.body.password,
-      user.password
-    );
+
+    // Compare password
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
 
     if (!isPasswordMatch) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Invalid credentials" });
+      console.log("Invalid credentials");
+      return res.status(404).json({ status: false, message: "Invalid credentials" });
     }
 
-    // get token
+    // Get token
     const token = generateToken(user);
-    const { password, role, appointments, ...rest } = user._doc;
+    const { password: _, role, appointments, ...rest } = user._doc; // Exclude password
 
-    res
-      .status(202)
-      .json({
-        status: true,
-        message: "Successfully login",
-        token,
-        data: { ...rest },
-        role,
-      });
+    res.status(202).json({
+      status: true,
+      message: "Successfully logged in",
+      token,
+      data: { ...rest },
+      role,
+    });
   } catch (error) {
-    res.status(500).json({ status: false, message: "Failed to login." });
+    console.error("Login error:", error); // Log error in server for debugging
+    return res.status(500).json({ status: false, message: "Failed to login." });
   }
 };
+

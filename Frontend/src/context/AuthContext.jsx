@@ -1,10 +1,17 @@
-import { createContext, useContext, useEffect, useReducer } from "react";
+import { createContext, useEffect, useReducer } from "react";
+
+// Utility function to safely parse JSON
+const safeParseJSON = (value) => {
+  try {
+    return value ? JSON.parse(value) : null;
+  } catch (error) {
+    console.error("Error parsing JSON:", error);
+    return null; // Fallback to null if parsing fails
+  }
+};
 
 const initialState = {
-  user:
-    localStorage.getItem("user") != undefined
-      ? JSON.parse(localStorage.getItem("user"))
-      : null,
+  user: safeParseJSON(localStorage.getItem("user")),
   role: localStorage.getItem("role") || null,
   token: localStorage.getItem("token") || null,
 };
@@ -40,13 +47,14 @@ const authReducer = (state, action) => {
 };
 
 export const AuthContextProvider = ({ children }) => {
-  // fixed from Children to children
   const [state, dispatch] = useReducer(authReducer, initialState);
+
   useEffect(() => {
     localStorage.setItem("user", JSON.stringify(state.user));
     localStorage.setItem("role", state.role);
     localStorage.setItem("token", state.token);
   }, [state]);
+
   return (
     <authContext.Provider
       value={{

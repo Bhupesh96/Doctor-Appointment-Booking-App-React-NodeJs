@@ -78,21 +78,23 @@ export const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      return req
+      return res
         .status(404)
         .json({ success: false, message: "User not found" });
     }
 
-    const [password, ...rest] = user._doc;
+    const { password, ...rest } = user._doc;  // Ensure password is omitted properly
     res.status(200).json({
       success: true,
-      message: "Profile info is getting",
-      data: { ...rest },
+      message: "Profile info retrieved",
+      data: rest,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Something went wrong, connot get" });
+    console.error("Error fetching user profile:", error);  // Log detailed error
+    res.status(500).json({
+      success: false,
+      message: "Server error: Failed to get profile",
+    });
   }
 };
 
